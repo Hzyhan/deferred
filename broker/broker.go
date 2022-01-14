@@ -1,11 +1,10 @@
 package broker
 
 import (
-"errors"
-"sync"
-"time"
+	"errors"
+	"sync"
+	"time"
 )
-
 
 type Broker interface {
 	publish(topic string, msg interface{}) error
@@ -17,11 +16,11 @@ type Broker interface {
 }
 
 type BrokerImpl struct {
-	exit chan bool
+	exit     chan bool
 	capacity int
 
-	topics map[string][]chan interface{} // key： topic  value ： queue
-	sync.RWMutex // 同步锁
+	topics       map[string][]chan interface{} // key： topic  value ： queue
+	sync.RWMutex                               // 同步锁
 }
 
 func NewBroker() *BrokerImpl {
@@ -31,11 +30,11 @@ func NewBroker() *BrokerImpl {
 	}
 }
 
-func (b *BrokerImpl)setConditions(capacity int)  {
+func (b *BrokerImpl) setConditions(capacity int) {
 	b.capacity = capacity
 }
 
-func (b *BrokerImpl) close()  {
+func (b *BrokerImpl) close() {
 	select {
 	case <-b.exit:
 		return
@@ -45,7 +44,6 @@ func (b *BrokerImpl) close()  {
 		b.topics = make(map[string][]chan interface{})
 		b.Unlock()
 	}
-	return
 }
 
 func (b *BrokerImpl) publish(topic string, pub interface{}) error {
@@ -66,7 +64,6 @@ func (b *BrokerImpl) publish(topic string, pub interface{}) error {
 	return nil
 }
 
-
 func (b *BrokerImpl) broadcast(msg interface{}, subscribers []chan interface{}) {
 	count := len(subscribers)
 	concurrency := 1
@@ -80,17 +77,15 @@ func (b *BrokerImpl) broadcast(msg interface{}, subscribers []chan interface{}) 
 		concurrency = 1
 	}
 
-
-
 	pub := func(start int) {
 		//采用Timer 而不是使用time.After 原因：time.After会产生内存泄漏 在计时器触发之前，垃圾回收器不会回收Timer
 		idleDuration := 5 * time.Millisecond
 		idleTimeout := time.NewTimer(idleDuration)
 		defer idleTimeout.Stop()
 		for j := start; j < count; j += concurrency {
-			if !idleTimeout.Stop(){
+			if !idleTimeout.Stop() {
 				select {
-				case <- idleTimeout.C:
+				case <-idleTimeout.C:
 				default:
 				}
 			}
@@ -107,7 +102,6 @@ func (b *BrokerImpl) broadcast(msg interface{}, subscribers []chan interface{}) 
 		go pub(i)
 	}
 }
-
 
 func (b *BrokerImpl) subscribe(topic string) (<-chan interface{}, error) {
 	select {

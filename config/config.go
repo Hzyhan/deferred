@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"strings"
-	"time"
 )
 
 const (
@@ -12,46 +11,19 @@ const (
 	DefaultResultsExpireIn = 3600
 )
 
-var (
-	// Start with sensible default values
-	defaultCnf = &Config{
-		Broker:          "amqp://guest:guest@localhost:5672/",
-		DefaultQueue:    "machinery_tasks",
-		ResultBackend:   "amqp://guest:guest@localhost:5672/",
-		ResultsExpireIn: DefaultResultsExpireIn,
-		AMQP: &AMQPConfig{
-			Exchange:      "machinery_exchange",
-			ExchangeType:  "direct",
-			BindingKey:    "machinery_task",
-			PrefetchCount: 3,
-		},
-		Redis: &RedisConfig{
-			MaxIdle:                3,
-			IdleTimeout:            240,
-			ReadTimeout:            15,
-			WriteTimeout:           15,
-			ConnectTimeout:         15,
-			NormalTasksPollPeriod:  1000,
-			DelayedTasksPollPeriod: 500,
-		},
-	}
-
-	reloadDelay = time.Second * 10
-)
-
 // Config holds all configuration for our program
 type Config struct {
-	Broker                  string           `yaml:"broker" envconfig:"BROKER"`
-	Lock                    string           `yaml:"lock" envconfig:"LOCK"`
-	MultipleBrokerSeparator string           `yaml:"multiple_broker_separator" envconfig:"MULTIPLE_BROKEN_SEPARATOR"`
-	DefaultQueue            string           `yaml:"default_queue" envconfig:"DEFAULT_QUEUE"`
-	ResultBackend           string           `yaml:"result_backend" envconfig:"RESULT_BACKEND"`
-	ResultsExpireIn         int              `yaml:"results_expire_in" envconfig:"RESULTS_EXPIRE_IN"`
-	AMQP                    *AMQPConfig      `yaml:"amqp"`
-	Redis                   *RedisConfig     `yaml:"redis"`
+	Broker                  string       `yaml:"broker" envconfig:"BROKER"`
+	Lock                    string       `yaml:"lock" envconfig:"LOCK"`
+	MultipleBrokerSeparator string       `yaml:"multiple_broker_separator" envconfig:"MULTIPLE_BROKEN_SEPARATOR"`
+	DefaultQueue            string       `yaml:"default_queue" envconfig:"DEFAULT_QUEUE"`
+	ResultBackend           string       `yaml:"result_backend" envconfig:"RESULT_BACKEND"`
+	ResultsExpireIn         int          `yaml:"results_expire_in" envconfig:"RESULTS_EXPIRE_IN"`
+	AMQP                    *AMQPConfig  `yaml:"amqp"`
+	Redis                   *RedisConfig `yaml:"redis"`
 	TLSConfig               *tls.Config
 	// NoUnixSignals - when set disables signal handling in machinery
-	NoUnixSignals bool            `yaml:"no_unix_signals" envconfig:"NO_UNIX_SIGNALS"`
+	NoUnixSignals bool `yaml:"no_unix_signals" envconfig:"NO_UNIX_SIGNALS"`
 }
 
 // QueueBindingArgs arguments which are used when binding to the exchange
@@ -70,7 +42,6 @@ type AMQPConfig struct {
 	PrefetchCount    int              `yaml:"prefetch_count" envconfig:"AMQP_PREFETCH_COUNT"`
 	AutoDelete       bool             `yaml:"auto_delete" envconfig:"AMQP_AUTO_DELETE"`
 }
-
 
 // RedisConfig ...
 type RedisConfig struct {

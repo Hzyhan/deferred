@@ -53,7 +53,7 @@ func (q *Queue) Peek() *tasks.Signature {
 
 // GetAll 获取所有任务
 func (q *Queue) GetAll() []*tasks.Signature {
-	return q.GetAll()
+	return q.list.GetAll()
 }
 
 func (q *Queue) Close() error {

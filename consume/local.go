@@ -19,13 +19,10 @@ import (
 // BrokerGR represents a Redis broker
 type BrokerGR struct {
 	common.Broker
-	queue        queue.IQueue
-	consumingWG  sync.WaitGroup // wait group to make sure whole consumption completes
-	processingWG sync.WaitGroup // use wait group to make sure task processing completes
-	delayedWG    sync.WaitGroup
-	// If set, path to a socket file overrides hostname
-	socketPath           string
-	redisOnce            sync.Once
+	queue                queue.IQueue
+	consumingWG          sync.WaitGroup // wait group to make sure whole consumption completes
+	processingWG         sync.WaitGroup // use wait group to make sure task processing completes
+	delayedWG            sync.WaitGroup
 	redisDelayedTasksKey string
 }
 
@@ -95,11 +92,11 @@ func (b *BrokerGR) StartConsuming(consumerTag string, concurrency int, taskProce
 				decoder := json.NewDecoder(bytes.NewReader(task))
 				decoder.UseNumber()
 				if err := decoder.Decode(signature); err != nil {
-					log.Print("Error.Decode err:%v", err)
+					log.Printf("Error.Decode err:%v", err)
 				}
 
 				if err := b.Publish(context.Background(), signature); err != nil {
-					log.Print("ERROR.Publish err:%v", err)
+					log.Printf("ERROR.Publish err:%v", err)
 				}
 			}
 		}
