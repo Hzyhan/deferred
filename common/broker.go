@@ -2,10 +2,11 @@ package common
 
 import (
 	"deferred/config"
+	"deferred/retry"
 	"deferred/tasks"
 	"errors"
+	"log"
 	"sync"
-
 )
 
 type registeredTaskNames struct {
@@ -107,12 +108,12 @@ func (b *Broker) StopConsuming() {
 	// Stop the retry closure earlier
 	select {
 	case b.retryStopChan <- 1:
-		log.Warn("Stopping retry closure.")
+		log.Println("WARN.Stopping retry closure.")
 	default:
 	}
 	// Notifying the stop channel stops consuming of messages
 	close(b.stopChan)
-	log.Warn("Stop channel")
+	log.Print("WARN.Stop channel")
 }
 
 // GetRegisteredTaskNames returns registered tasks names

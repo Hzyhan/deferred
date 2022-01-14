@@ -5,11 +5,13 @@ import (
 	"context"
 	"deferred/common"
 	"deferred/config"
+	"deferred/errs"
+	"deferred/iface"
 	"deferred/queue"
 	"deferred/tasks"
 	"encoding/json"
+	"log"
 	"runtime"
-	"strings"
 	"sync"
 	"time"
 )
@@ -28,7 +30,7 @@ type BrokerGR struct {
 }
 
 // StartConsuming enters a loop and waits for incoming messages
-func (b *BrokerGR) StartConsuming(consumerTag string, concurrency int) (bool, error) {
+func (b *BrokerGR) StartConsuming(consumerTag string, concurrency int, taskProcessor iface.TaskProcessor) (bool, error) {
 	b.consumingWG.Add(1)
 	defer b.consumingWG.Done()
 
@@ -37,21 +39,6 @@ func (b *BrokerGR) StartConsuming(consumerTag string, concurrency int) (bool, er
 	}
 
 	b.Broker.StartConsuming(consumerTag, concurrency)
-
-	// Ping the server to make sure connection is live
-	_, err := b.rclient.Ping(context.Background()).Result()
-	if err != nil {
-		b.GetRetryFunc()(b.GetRetryStopChan())
-
-		// Return err if retry is still true.
-		// If retry is false, broker.StopConsuming() has been called and
-		// therefore Redis might have been stopped. Return nil exit
-		// StartConsuming()
-		if b.GetRetry() {
-			return b.GetRetry(), err
-		}
-		return b.GetRetry(), errs.ErrConsumerStopped
-	}
 
 	// Channel to which we will push tasks ready for processing by worker
 	deliveries := make(chan []byte, concurrency)
@@ -67,7 +54,7 @@ func (b *BrokerGR) StartConsuming(consumerTag string, concurrency int) (bool, er
 	// we send it to the deliveries channel
 	go func() {
 
-		log.INFO.Print("[*] Waiting for messages. To exit press CTRL+C")
+		log.Print("[*] INFO.Waiting for messages. To exit press CTRL+C")
 
 		for {
 			select {
@@ -108,11 +95,11 @@ func (b *BrokerGR) StartConsuming(consumerTag string, concurrency int) (bool, er
 				decoder := json.NewDecoder(bytes.NewReader(task))
 				decoder.UseNumber()
 				if err := decoder.Decode(signature); err != nil {
-					log.Error("Decode err:%v", err)
+					log.Print("Error.Decode err:%v", err)
 				}
 
 				if err := b.Publish(context.Background(), signature); err != nil {
-					log.ERROR("Publish err:%v", err)
+					log.Print("ERROR.Publish err:%v", err)
 				}
 			}
 		}
@@ -158,44 +145,13 @@ func (b *BrokerGR) Publish(ctx context.Context, signature *tasks.Signature) erro
 // GetPendingTasks returns a slice of task signatures waiting in the queue
 func (b *BrokerGR) GetPendingTasks(queue string) ([]*tasks.Signature, error) {
 
-	if queue == "" {
-		queue = b.GetConfig().DefaultQueue
-	}
-	results, err := b.rclient.LRange(context.Background(), queue, 0, -1).Result()
-	if err != nil {
-		return nil, err
-	}
-
-	taskSignatures := make([]*tasks.Signature, len(results))
-	for i, result := range results {
-		signature := new(tasks.Signature)
-		decoder := json.NewDecoder(strings.NewReader(result))
-		decoder.UseNumber()
-		if err := decoder.Decode(signature); err != nil {
-			return nil, err
-		}
-		taskSignatures[i] = signature
-	}
+	taskSignatures := b.queue.GetAll()
 	return taskSignatures, nil
 }
 
 // GetDelayedTasks returns a slice of task signatures that are scheduled, but not yet in the queue
 func (b *BrokerGR) GetDelayedTasks() ([]*tasks.Signature, error) {
-	results, err := b.rclient.ZRange(context.Background(), b.redisDelayedTasksKey, 0, -1).Result()
-	if err != nil {
-		return nil, err
-	}
-
-	taskSignatures := make([]*tasks.Signature, len(results))
-	for i, result := range results {
-		signature := new(tasks.Signature)
-		decoder := json.NewDecoder(strings.NewReader(result))
-		decoder.UseNumber()
-		if err := decoder.Decode(signature); err != nil {
-			return nil, err
-		}
-		taskSignatures[i] = signature
-	}
+	taskSignatures := b.queue.GetAll()
 	return taskSignatures, nil
 }
 
@@ -254,26 +210,14 @@ func (b *BrokerGR) consumeOne(delivery []byte, taskProcessor iface.TaskProcessor
 		return errs.NewErrCouldNotUnmarshalTaskSignature(delivery, err)
 	}
 
-	// If the task is not registered, we requeue it,
-	// there might be different workers for processing specific tasks
-	if !b.IsTaskRegistered(signature.Name) {
-		if signature.IgnoreWhenTaskNotRegistered {
-			return nil
-		}
-		log.INFO.Printf("Task not registered with this worker. Requeuing message: %s", delivery)
-
-		b.rclient.RPush(context.Background(), getQueueGR(b.GetConfig(), taskProcessor), delivery)
-		return nil
-	}
-
-	log.DEBUG.Printf("Received new message: %s", delivery)
+	log.Printf("DEBUG.Received new message: %s", delivery)
 
 	return taskProcessor.Process(signature)
 }
 
 // nextTask pops next available task from the default queue
 func (b *BrokerGR) nextTask(queue string) (result []byte, err error) {
-	signature:= b.queue.Dequeue()
+	signature := b.queue.Dequeue()
 	return json.Marshal(signature)
 }
 

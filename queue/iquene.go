@@ -14,5 +14,6 @@ type IQueue interface {
 	Enqueue(data *tasks.Signature) error
 	Dequeue() *tasks.Signature
 	Peek() *tasks.Signature
+	GetAll() []*tasks.Signature
 	Close() error
 }
