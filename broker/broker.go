@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-type Broker interface {
+type IBroker interface {
 	publish(topic string, msg interface{}) error
 	subscribe(topic string) (<-chan interface{}, error)
 	unsubscribe(topic string, sub <-chan interface{}) error
