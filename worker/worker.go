@@ -145,9 +145,6 @@ func (worker *Worker) Process(signature *tasks.Signature) error {
 	// try to extract trace span from headers and add it to the function context
 	// so it can be used inside the function if it has context.Context as the first
 	// argument. Start a new span if it isn't found.
-	taskSpan := tracing.StartSpanFromHeaders(signature.Headers, signature.Name)
-	tracing.AnnotateSpanWithSignatureInfo(taskSpan, signature)
-	task.Context = opentracing.ContextWithSpan(task.Context, taskSpan)
 
 	// Update task state to STARTED
 

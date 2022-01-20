@@ -98,7 +98,6 @@ func (b *Broker) StartConsuming(consumerTag string, concurrency int) {
 	if b.retryFunc == nil {
 		b.retryFunc = retry.Closure()
 	}
-
 }
 
 // StopConsuming is a common part of StopConsuming

@@ -3,10 +3,10 @@ package cosnsume
 import (
 	"bytes"
 	"context"
+	"deferred/broker"
 	"deferred/common"
 	"deferred/config"
 	"deferred/errs"
-	"deferred/iface"
 	"deferred/queue"
 	"deferred/tasks"
 	"encoding/json"
@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-// BrokerGR represents a Redis broker
+// BrokerGR represents a local broker
 type BrokerGR struct {
 	common.Broker
 	queue                queue.IQueue
@@ -27,7 +27,7 @@ type BrokerGR struct {
 }
 
 // StartConsuming enters a loop and waits for incoming messages
-func (b *BrokerGR) StartConsuming(consumerTag string, concurrency int, taskProcessor iface.TaskProcessor) (bool, error) {
+func (b *BrokerGR) StartConsuming(consumerTag string, concurrency int, taskProcessor broker.TaskProcessor) (bool, error) {
 	b.consumingWG.Add(1)
 	defer b.consumingWG.Done()
 
@@ -154,7 +154,7 @@ func (b *BrokerGR) GetDelayedTasks() ([]*tasks.Signature, error) {
 
 // consume takes delivered messages from the channel and manages a worker pool
 // to process tasks concurrently
-func (b *BrokerGR) consume(deliveries <-chan []byte, concurrency int, taskProcessor iface.TaskProcessor) error {
+func (b *BrokerGR) consume(deliveries <-chan []byte, concurrency int, taskProcessor broker.TaskProcessor) error {
 	errorsChan := make(chan error, concurrency*2)
 	pool := make(chan struct{}, concurrency)
 
@@ -199,7 +199,7 @@ func (b *BrokerGR) consume(deliveries <-chan []byte, concurrency int, taskProces
 }
 
 // consumeOne processes a single message using TaskProcessor
-func (b *BrokerGR) consumeOne(delivery []byte, taskProcessor iface.TaskProcessor) error {
+func (b *BrokerGR) consumeOne(delivery []byte, taskProcessor broker.TaskProcessor) error {
 	signature := new(tasks.Signature)
 	decoder := json.NewDecoder(bytes.NewReader(delivery))
 	decoder.UseNumber()
@@ -240,7 +240,7 @@ func (b *BrokerGR) nextDelayedTask(key string) (result []byte, err error) {
 	}
 }
 
-func getQueueGR(config *config.Config, taskProcessor iface.TaskProcessor) string {
+func getQueueGR(config *config.Config, taskProcessor broker.TaskProcessor) string {
 	customQueue := taskProcessor.CustomQueue()
 	if customQueue == "" {
 		return config.DefaultQueue
