@@ -7,9 +7,10 @@ import (
 	"deferred/tasks"
 	"deferred/worker"
 	"fmt"
-	"github.com/robfig/cron/v3"
 	"log"
 	"sync"
+
+	"github.com/robfig/cron/v3"
 )
 
 // Server is the main Machinery object and stores all configuration
@@ -122,42 +123,42 @@ func (server *Server) GetRegisteredTask(name string) (interface{}, error) {
 }
 
 // SendTaskWithContext will inject the trace context in the signature headers before publishing it
-func (server *Server) SendTaskWithContext(ctx context.Context, signature *tasks.Signature) () {
+func (server *Server) SendTaskWithContext(ctx context.Context, signature *tasks.Signature) {
 
 }
 
 // SendTask publishes a task to the default queue
-func (server *Server) SendTask(signature *tasks.Signature) () {
+func (server *Server) SendTask(signature *tasks.Signature) {
 
 }
 
 // SendChainWithContext will inject the trace context in all the signature headers before publishing it
-func (server *Server) SendChainWithContext(ctx context.Context, chain *tasks.Chain) () {
+func (server *Server) SendChainWithContext(ctx context.Context, chain *tasks.Chain) {
 
 }
 
 // SendChain triggers a chain of tasks
-func (server *Server) SendChain(chain *tasks.Chain) () {
+func (server *Server) SendChain(chain *tasks.Chain) {
 
 }
 
 // SendGroupWithContext will inject the trace context in all the signature headers before publishing it
-func (server *Server) SendGroupWithContext(ctx context.Context, group *tasks.Group, sendConcurrency int) () {
+func (server *Server) SendGroupWithContext(ctx context.Context, group *tasks.Group, sendConcurrency int) {
 
 }
 
 // SendGroup triggers a group of parallel tasks
-func (server *Server) SendGroup(group *tasks.Group, sendConcurrency int) () {
+func (server *Server) SendGroup(group *tasks.Group, sendConcurrency int) {
 
 }
 
 // SendChordWithContext will inject the trace context in all the signature headers before publishing it
-func (server *Server) SendChordWithContext(ctx context.Context, chord *tasks.Chord, sendConcurrency int) () {
+func (server *Server) SendChordWithContext(ctx context.Context, chord *tasks.Chord, sendConcurrency int) {
 
 }
 
 // SendChord triggers a group of parallel tasks with a callback
-func (server *Server) SendChord(chord *tasks.Chord, sendConcurrency int) () {
+func (server *Server) SendChord(chord *tasks.Chord, sendConcurrency int) {
 
 }
 

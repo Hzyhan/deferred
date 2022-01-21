@@ -13,15 +13,10 @@ const (
 
 // Config holds all configuration for our program
 type Config struct {
-	Broker                  string       `yaml:"broker" envconfig:"BROKER"`
-	Lock                    string       `yaml:"lock" envconfig:"LOCK"`
-	MultipleBrokerSeparator string       `yaml:"multiple_broker_separator" envconfig:"MULTIPLE_BROKEN_SEPARATOR"`
-	DefaultQueue            string       `yaml:"default_queue" envconfig:"DEFAULT_QUEUE"`
-	ResultBackend           string       `yaml:"result_backend" envconfig:"RESULT_BACKEND"`
-	ResultsExpireIn         int          `yaml:"results_expire_in" envconfig:"RESULTS_EXPIRE_IN"`
-	AMQP                    *AMQPConfig  `yaml:"amqp"`
-	Redis                   *RedisConfig `yaml:"redis"`
-	TLSConfig               *tls.Config
+	Broker       string       `yaml:"broker" envconfig:"BROKER"`
+	DefaultQueue string       `yaml:"default_queue" envconfig:"DEFAULT_QUEUE"`
+	Redis        *RedisConfig `yaml:"redis"`
+	TLSConfig    *tls.Config
 	// NoUnixSignals - when set disables signal handling in machinery
 	NoUnixSignals bool `yaml:"no_unix_signals" envconfig:"NO_UNIX_SIGNALS"`
 }
@@ -31,17 +26,6 @@ type QueueBindingArgs map[string]interface{}
 
 // QueueDeclareArgs arguments which are used when declaring a queue
 type QueueDeclareArgs map[string]interface{}
-
-// AMQPConfig wraps RabbitMQ related configuration
-type AMQPConfig struct {
-	Exchange         string           `yaml:"exchange" envconfig:"AMQP_EXCHANGE"`
-	ExchangeType     string           `yaml:"exchange_type" envconfig:"AMQP_EXCHANGE_TYPE"`
-	QueueDeclareArgs QueueDeclareArgs `yaml:"queue_declare_args" envconfig:"AMQP_QUEUE_DECLARE_ARGS"`
-	QueueBindingArgs QueueBindingArgs `yaml:"queue_binding_args" envconfig:"AMQP_QUEUE_BINDING_ARGS"`
-	BindingKey       string           `yaml:"binding_key" envconfig:"AMQP_BINDING_KEY"`
-	PrefetchCount    int              `yaml:"prefetch_count" envconfig:"AMQP_PREFETCH_COUNT"`
-	AutoDelete       bool             `yaml:"auto_delete" envconfig:"AMQP_AUTO_DELETE"`
-}
 
 // RedisConfig ...
 type RedisConfig struct {
